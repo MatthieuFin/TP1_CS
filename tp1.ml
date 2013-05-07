@@ -6,7 +6,7 @@ let p2 = [(0,2.5);(1,5.);(2,5.);(3,1.)] ;;
 let q = [(0,5.);(1,1.);(2,9.);(3,7.)];;
 let r = [(0,2.);(1,4.);(2,2.)];;
 
-let rec coeff i p = 
+let rec coeff ( i : int) (p : poly) = 
   match p with
       [] -> 0.
     | (deg,coef)::l when deg == i -> coef
@@ -206,7 +206,6 @@ let gi f borne =
 
 gi [(0,1.);(1,1.)] 2.;;
 
-(* split fonctionnant avec l'exemple du TD *)
 let split (a : poly) (n : int) =
   let rec aux acc p =
       match p with
@@ -217,42 +216,91 @@ let split (a : poly) (n : int) =
 	  else
 	    (aux acc l)
   in
+  (*if n = 1 then
+    []
+  else
+    aux [] (List.rev a)*)
   aux [] (List.rev a)
 ;;
 
-
+(*
+  @pre (coeff (deg b) b) == 1.
+*)
 let div a b =
   let m = deg a
   and n = deg b in
   let s = (gi (renv n b) (float_of_int (m - n + 1))) in
   let srA = mul s (renv m a) in
-  let rQ = split srA (m-n+1)
-    (*if m = n then
-	split srA (m-n)
-     else
-	split srA (m-n+1)*)
+  let rQ = split srA (m - n + 1)
   in
   let q = renv (m-n) rQ in
   let r = (difference a (mul b q)) in
   (q,r)
 ;;
 
-(* Exemple fonctionnant avec Newton *)
+let divCoeff (p : poly) (coeffDom : float) =
+  let rec aux p acc =
+    match p with
+	[]    -> acc
+      | (d,c)::l -> aux l ((d,(c /. coeffDom))::acc)
+  in
+  aux (List.rev p) []
+;;
+let mulCoeff (p : poly) (coeff : float) = 
+  let rec aux p acc =
+    match p with
+	[]       -> acc
+      | (d,c)::l -> aux l ((d,(c *. coeff))::acc)
+  in
+  aux (List.rev p) []
+;;
+
+let div2 (a : poly) (b : poly) =
+  let coeffDom = (coeff (deg b) b) in
+  if coeffDom == 1. then
+    div a b
+  else
+    let res = (div (divCoeff a coeffDom) (divCoeff b coeffDom)) in
+    (fst res),(mulCoeff (snd res) coeffDom)
+;;
+
+
+
+(* Exemples fonctionnant avec Newton *)
+(* Exemple du TD *)
 let a = [(0,3.);(1,2.);(3,1.)];;
 let b = [(1,1.);(2,1.)];;
 toString a;;
 toString b;;
-
 let res = (div a b);;
 toString (fst res);;
 toString (snd res);;
+(* Exemple wikipedia
+fr.wikipedia.org/wiki/Division_d'un_polynôme#Division_euclidienne *)
+let aw = [(1,-2.);(2,3.);(3,-1.);(4,-1.);(5,1.)];;
+let bw = [(0,1.);(1,-1.);(2,1.)];;
+toString aw;;
+toString bw;;
+let resw = (div aw bw);;
+toString (fst resw);;
+toString (snd resw);;
 
-(* Exemple ne fonctionnant pas avec Newton *)
+(* Exemples ne fonctionnant pas avec Newton *)
 let e = [0,2.];;
 let f = [0,10.];;
 let di = (div e f);;
 toString (fst di);;
 toString (snd di);;
+(* Deuxieme exemple de wikipedia *)
+let aw2 = [(0,1.);(1,3.);(2,2.);(3,-7.)];;
+let bw2 = [(0,1.);(1,1.);(2,-2.)];;
+toString aw2;;
+toString bw2;;
+let resw2 = (div aw2 bw2);;
+toString (fst resw2);;
+toString (snd resw2);;
+
+
 
 (* test Newton *)
 let x = [(0,1.);(3,1.);(4,2.);(5,3.);(7,5.)];;
@@ -263,7 +311,6 @@ let d = div x y;;
 toString (fst d);;
 toString (snd d);;
 
-let i = 1;;
 
 (*  *)
 
